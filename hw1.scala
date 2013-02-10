@@ -27,6 +27,7 @@ object NaiveBayes {
   /* Trains a classifer, ie computing log(P(t|c)).
    * Returns log(P(t|c)) for all t and c. */
   def train() {
+    /* comment*/
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
