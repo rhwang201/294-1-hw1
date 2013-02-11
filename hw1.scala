@@ -27,23 +27,35 @@ object NaiveBayes {
 
   /* Trains a classifer, ie computing log(P(t|c)).
    * Returns log(P(t|c)) for all t and c. */
-  def train() {
+  def train(fmat: Array[Array[Array[Int]]]): Array[Array[Double]] = {
     /* Takes in |V| x |D| matrix doc_fmat of document term frequencies */
-    num_features = doc_fmat(0).length
-    val pos_freq = fmat(0)
-    val neg_freq = fmat(1)
-    var pos_sum = 0
-    var neg_sum = 0
+    val pos_doc_fmat = doc_fmat(0)
+    val neg_doc_fmat = doc_fmat(1)
+    val num_features = pos_doc_fmat.length
+    val num_docs = pos_doc_fmat(0).length
+    /* Compile into a |V| x 2 matrix fmat of aggregate term freuquencies */
+    val pos_freq = new Array[Double](num_features)
+    val neg_freq = new Array[Double](num_features)
+    var pos_sum = 0.0
+    var neg_sum = 0.0
     for (i <- 0 until num_features) {
-      pos_sum = pos_sum + pos_featuers(i)
-      neg_sum = neg_sum + neg_features(i)
+      var pos_feature = 0.0
+      var neg_feature = 0.0
+      for (j <- 0 until num_docs) {
+        pos_feature = pos_feature + pos_doc_fmat(i)(j).toDouble
+        neg_feature = neg_feature + neg_doc_fmat(i)(j).toDouble
+      }
+      pos_freq(i) = pos_feature
+      pos_sum = pos_sum + pos_feature
+      neg_freq(i) = neg_feature
+      neg_sum = neg_sum + neg_feature
     }
     /* Construct probability matrix log(P(t|c)) */
     var pos_prob = new Array[Double](num_features)
     var neg_prob = new Array[Double](num_features)
     for (i <- 0 until num_features) {
-      pos_prob(i) = log( pos_freq(i) / pos_sum )
-      neg_prob(i) = log( neg_freq(i) / neg_sum )
+      pos_prob(i) = math.log( pos_freq(i) / pos_sum )
+      neg_prob(i) = math.log( neg_freq(i) / neg_sum )
     }
     val pmat = Array(pos_prob, neg_prob)
     return pmat
