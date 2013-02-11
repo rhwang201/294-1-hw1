@@ -66,9 +66,21 @@ object NaiveBayes {
   }
 
   /* Returns a sparse matrix of features*/
-  def process() = {
-    // Optionally can read from term_index_filename
-    val term_index = create_dict()
+  def process(read_index: Boolean = False) = {
+    if (read_index) {
+      val term_index = mutable.Map.empty[String, Int]
+      val s = Source.fromFile(term_index_filename)
+      s.getLines.foreach( (line: String) => {
+        line.split(",") match {
+          case Array(str, num) => { term_index(str) = num.toInt }
+          case _ => error("too many commas")
+        }
+      })
+    } else {
+      val term_index = create_dict()
+    }
+
+    // NOTE: do the rest from within BIDMat????
 
     // Then create doc, word matrix
     val pos_file_names = "ls %sneg".format(example_dir).split("\n")
