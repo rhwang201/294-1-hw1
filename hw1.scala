@@ -12,7 +12,14 @@ object NaiveBayes {
   val example_dir =
     "/Users/richard/classes/294-1/hw1/review_polarity/txt_sentoken/"
 
-  /* Returns a dictionary of term->index*/
+  val term_index_filename = "term_index.txt"
+
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    val p = new java.io.PrintWriter(f)
+    try { op(p) } finally { p.close() }
+  }
+
+  /* Writes a dictionary of term->index to a file. */
   def create_dict(): mutable.Map[String,Int]  = {
     val term_index = mutable.Map.empty[String, Int]
     var i = 0
@@ -44,12 +51,15 @@ object NaiveBayes {
       })
     })
 
-    return term_index
+  printToFile(new File(term_index_filename))( p => {
+    term_index.foreach(p.println)
+  })
   }
 
   /* Returns a sparse matrix of features*/
   def process() = {
-    val termDict = create_dict()
+    create_dict()
+    // Read dict from file
 
     // Then create doc, word matrix
     val pos_file_names = "ls %sneg".format(example_dir).split("\n")
