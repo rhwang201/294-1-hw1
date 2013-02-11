@@ -38,7 +38,7 @@ object NaiveBayes {
           })
       })
     })
-    println("Finished positive examples")
+    println("Finished indexing positive examples")
 
     files = "ls %sneg".format(example_dir).!!.split("\n")
     files.par.foreach( (file: String) => {
@@ -52,14 +52,23 @@ object NaiveBayes {
           })
       })
     })
+    println("Finished indexing negative examples")
+
+    // Writing results to file
+    printToFile(new File(term_index_filename))(p => {
+      term_index.foreach(t => {
+        p.println(t._1 + "," + t._2)
+      })
+    })
+    println("Wrote to " + term_index_filename)
 
     return term_index;
   }
 
   /* Returns a sparse matrix of features*/
   def process() = {
-    create_dict()
-    // Read dict from file
+    // Optionally can read from term_index_filename
+    val term_index = create_dict()
 
     // Then create doc, word matrix
     val pos_file_names = "ls %sneg".format(example_dir).split("\n")
