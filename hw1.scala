@@ -13,12 +13,13 @@ object NaiveBayes {
     "/Users/richard/classes/294-1/hw1/review_polarity/txt_sentoken/"
 
   /* Returns a dictionary of term->index*/
-  def create_dict() = {
-    term_index = mutable.Map.empty[String, Int]
+  def create_dict(): mutable.Map[String,Int]  = {
+    val term_index = mutable.Map.empty[String, Int]
     var i = 0
 
-    "ls %spos".format(example_dir).split("\n").foreach( (i) -> {
-      val s = Source.fromFile(pos_file_names(i))
+    var files = "ls %spos".format(example_dir).!!.split("\n")
+    files.foreach( (file: String) => {
+      val s = Source.fromFile(example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!term_index.keySet.exists(_ == word)) {
@@ -28,9 +29,11 @@ object NaiveBayes {
           })
       })
     })
+    println("Finished positive examples")
 
-    "ls %sneg".format(example_dir).split("\n").foreach( (i) -> {
-      val s = Source.fromFile(pos_file_names(i))
+    files = "ls %sneg".format(example_dir).!!.split("\n")
+    files.foreach( (file: String) => {
+      val s = Source.fromFile(example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!term_index.keySet.exists(_ == word)) {
@@ -62,24 +65,24 @@ object NaiveBayes {
    * Returns log(P(t|c)) for all t and c. */
   def train() {
     /* Takes in |V| x |D| matrix doc_fmat of document term frequencies */
-    num_features = doc_fmat(0).length
-    val pos_freq = fmat(0)
-    val neg_freq = fmat(1)
-    var pos_sum = 0
-    var neg_sum = 0
-    for (i <- 0 until num_features) {
-      pos_sum = pos_sum + pos_featuers(i)
-      neg_sum = neg_sum + neg_features(i)
-    }
-    /* Construct probability matrix log(P(t|c)) */
-    var pos_prob = new Array[Double](num_features)
-    var neg_prob = new Array[Double](num_features)
-    for (i <- 0 until num_features) {
-      pos_prob(i) = log( pos_freq(i) / pos_sum )
-      neg_prob(i) = log( neg_freq(i) / neg_sum )
-    }
-    val pmat = Array(pos_prob, neg_prob)
-    return pmat
+    //num_features = doc_fmat(0).length
+    //val pos_freq = fmat(0)
+    //val neg_freq = fmat(1)
+    //var pos_sum = 0
+    //var neg_sum = 0
+    //for (i <- 0 until num_features) {
+    //  pos_sum = pos_sum + pos_featuers(i)
+    //  neg_sum = neg_sum + neg_features(i)
+    //}
+    ///* Construct probability matrix log(P(t|c)) */
+    //var pos_prob = new Array[Double](num_features)
+    //var neg_prob = new Array[Double](num_features)
+    //for (i <- 0 until num_features) {
+    //  pos_prob(i) = log( pos_freq(i) / pos_sum )
+    //  neg_prob(i) = log( neg_freq(i) / neg_sum )
+    //}
+    //val pmat = Array(pos_prob, neg_prob)
+    //return pmat
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
