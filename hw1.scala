@@ -6,6 +6,7 @@ import scala.io._
 import scala.sys.process._
 import scala.collection.mutable
 import scala.math
+import java.io._
 
 object NaiveBayes {
 
@@ -14,6 +15,7 @@ object NaiveBayes {
 
   val term_index_filename = "term_index.txt"
 
+  /* Useful. */
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     val p = new java.io.PrintWriter(f)
     try { op(p) } finally { p.close() }
@@ -25,7 +27,7 @@ object NaiveBayes {
     var i = 0
 
     var files = "ls %spos".format(example_dir).!!.split("\n")
-    files.foreach( (file: String) => {
+    files.par.foreach( (file: String) => {
       val s = Source.fromFile(example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
@@ -39,7 +41,7 @@ object NaiveBayes {
     println("Finished positive examples")
 
     files = "ls %sneg".format(example_dir).!!.split("\n")
-    files.foreach( (file: String) => {
+    files.par.foreach( (file: String) => {
       val s = Source.fromFile(example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
@@ -51,9 +53,7 @@ object NaiveBayes {
       })
     })
 
-  printToFile(new File(term_index_filename))( p => {
-    term_index.foreach(p.println)
-  })
+    return term_index;
   }
 
   /* Returns a sparse matrix of features*/
@@ -112,8 +112,7 @@ object NaiveBayes {
   }
 
   def main(args: Array[String]) = {
-    val index = create_dict()
-    print("test")
+    var term_index = create_dict()
   }
 
 }
