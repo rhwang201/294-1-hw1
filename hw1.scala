@@ -27,10 +27,10 @@ object NaiveBayes {
 
   /* Trains a classifer, ie computing log(P(t|c)).
    * Returns log(P(t|c)) for all t and c. */
-  def train(fmat: Array[Array[Array[Int]]]): Array[Array[Double]] = {
-    /* Takes in |V| x |D| matrix doc_fmat of document term frequencies */
-    val pos_doc_fmat = doc_fmat(0)
-    val neg_doc_fmat = doc_fmat(1)
+  def train(doc_fmat: Array[Array[Array[Int]]]): Array[Array[Double]] = {
+    /* Takes in |V| x |D| matrix doc_fmat of DOCument term Frequencies MATrix*/
+    val pos_doc_fmat = doc_fmat(0)  //positive documents
+    val neg_doc_fmat = doc_fmat(1)  //negative documents
     val num_features = pos_doc_fmat.length
     val num_docs = pos_doc_fmat(0).length
     /* Compile into a |V| x 2 matrix fmat of aggregate term freuquencies */
