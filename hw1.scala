@@ -1,11 +1,14 @@
-/* Richard Hwang*/
+/* Richard Hwang and David Huang */
 /* CS294-1 */
 /* Spring 2013 */
 
-/* NOTE: To import BIDMat, make sure this file is in the BIDMat
- * directory.  Compile with:
- *   scalac -cp BIDMat.jar hw1.scala
+/* INSTRUCTIONS:
+ *   To run this script with BIDMat, place this file in
+ *   ${BIDMat}/src/main/scala. To compile, run "sbt compile" from project
+ *   root. Class files will be in target/scala-2.9.2/classes. From there, you
+ *   can run the typical "scala NaiveBayes" command.
  */
+
 import scala.io._
 import scala.sys.process._
 import scala.collection.mutable
@@ -25,6 +28,13 @@ object NaiveBayes {
 
   val term_index_dir = "/Users/richard/classes/294-1/hw1/"
   val term_index_filename = "term_index.txt"
+  val pos_files = "ls %spos".format(example_dir).!!.split("\n")
+  val neg_files = "ls %sneg".format(example_dir).!!.split("\n")
+
+  val word_mat_dir = "/Users/richard/classes/294-1/BIDMat/"
+  val word_mat_name = "words.mat"
+
+  val num_documents = 2000
 
   /* Useful. */
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -37,8 +47,7 @@ object NaiveBayes {
     val term_index = mutable.Map.empty[String, Int]
     var i = 0
 
-    var files = "ls %spos".format(example_dir).!!.split("\n")
-    files.par.foreach( (file: String) => {
+    pos_files.par.foreach( (file: String) => {
       val s = Source.fromFile(example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
@@ -51,8 +60,7 @@ object NaiveBayes {
     })
     println("Finished indexing positive examples")
 
-    files = "ls %sneg".format(example_dir).!!.split("\n")
-    files.par.foreach( (file: String) => {
+    neg_files.par.foreach( (file: String) => {
       val s = Source.fromFile(example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
@@ -122,11 +130,11 @@ object NaiveBayes {
     return term_index;
   }
 
-
   /* Returns a sparse matrix of features*/
-  def process(read_index: Boolean = false) = {
+  def process(read_index: Boolean = false): BIDMat.SMat = {
+    // Get term_index
+    var term_index = mutable.Map.empty[String, Int]
     if (read_index) {
-      val term_index = mutable.Map.empty[String, Int]
       val s = Source.fromFile(term_index_dir + term_index_filename)
       s.getLines.foreach( (line: String) => {
         line.split(",") match {
@@ -135,21 +143,39 @@ object NaiveBayes {
         }
       })
     } else {
-      val term_index = create_dict()
+      term_index = create_dict()
     }
 
-    // NOTE: do the rest from within BIDMat????
+    // Construct words_docs matrix
+    val num_words = term_index.size
 
-    // Then create doc, word matrix
-    //val pos_file_names = "ls %sneg".format(example_dir).split("\n")
-    //for (i <- 0 until pos_file_names.length) {
-    //  val s = Source.fromFile(pos_file_names(i))
-    //  s.getLines.foreach( (line) => {
-    //    // TODO Fill me in
-    //  })
-    //}
+    Mat.noMKL = true
+    var words_docs: FMat = zeros(num_words, num_documents)
 
-    //saveAs("d:\data\sentiment\data1.mat", a, "tokens", b, "trigrams")
+    for (i <- 0 until pos_files.length) {
+      val s = Source.fromFile(example_dir + "pos/" + pos_files(i))
+      s.getLines.foreach( (line) => {
+        line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+          words_docs(term_index(word), i) += 1
+        })
+      })
+    }
+    for (i <- 0 until neg_files.length) {
+      val s = Source.fromFile(example_dir + "neg/" + neg_files(i))
+      s.getLines.foreach( (line) => {
+        line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+          words_docs(term_index(word), i) += 1
+        })
+      })
+    }
+
+    words_docs = sparse(words_docs)
+    saveAs(word_mat_dir + word_mat_name, words_docs, "words_docs")
+    return words_docs
+  }
+
+  /* TODO */
+  def file_to_vect() = {
   }
 
   /* Trains a classifer, ie computing log(P(t|c)) for all t and c. */
@@ -221,10 +247,6 @@ object NaiveBayes {
   }
 
   def main(args: Array[String]) = {
-    //Mat.noMKL=true
     process(true)
   }
-
-
-
 }
