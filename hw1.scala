@@ -89,11 +89,10 @@ object NaiveBayes {
       s.getLines.foreach( (line) => {
         // TODO Fill me in
       })
-  }
+    }
   }
 
-  /* Trains a classifer, ie computing log(P(t|c)).
-   * Returns log(P(t|c)) for all t and c. */
+  /* Trains a classifer, ie computing log(P(t|c)) for all t and c. */
   def train(doc_fmat: Array[Array[Array[Int]]]): Array[Array[Double]] = { //Takes in Integer frequency matrix; outputs Double log-probability matrix
     /* Takes in |V| x |D| matrix doc_fmat of DOCument feature-Frequency MATrix*/
     val pos_doc_fmat = doc_fmat(0)  //positive documents
@@ -109,13 +108,13 @@ object NaiveBayes {
       var pos_feature = 0.0 //word count for a particular word in positive documents
       var neg_feature = 0.0 //word count for a particular word in negative documents
       for (j <- 0 until num_docs) { //iterate through columns/documents
-        pos_feature = pos_feature + pos_doc_fmat(i)(j).toDouble //aggregate the same feature across all positive documents
-        neg_feature = neg_feature + neg_doc_fmat(i)(j).toDouble //aggregate the same feature across all negative documents
+        pos_feature += pos_doc_fmat(i)(j).toDouble //aggregate the same feature across all positive documents
+        neg_feature += neg_doc_fmat(i)(j).toDouble //aggregate the same feature across all negative documents
       }
       pos_freq(i) = pos_feature //populate i_th row/feature in positive document frequency matrix
-      pos_sum = pos_sum + pos_feature //augment total word count in positive documents
+      pos_sum += pos_feature //augment total word count in positive documents
       neg_freq(i) = neg_feature //populate i_th row/feature in negative document frequency matrix
-      neg_sum = neg_sum + neg_feature //augment total word count in negative documents
+      neg_sum += neg_feature //augment total word count in negative documents
     }
     /* Construct two probability matrices for log(P(t|c)) counterpart of frequency entries */
     var pos_prob = new Array[Double](num_features)  //positive feature log-probability matrix
@@ -128,12 +127,31 @@ object NaiveBayes {
     return pmat  //note that output log-probabilities are negative (i.e. more frequent terms show up as less frequent terms => take absolute value before further computation?)
   }
 
-  /* Performs 10-fold cross-validation, and applies an accuracy measure. */
-  def validation(logs: Array[Array[Double]]) = {
+  /* Classifies the sentiment level of a given document. */
+  def classify(model: Array[Array[Double]], priors: Array[Double], doc: String): Int = {
+    /* TODO: Process given document into its sparse-matrix, log-probability representation */
+
+    /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
+    num_features = model(0).length
+    pos_model = model(0)
+    pos_sent = Array[Double](num_features)
+    pos_map = math.log(priors(0))
+    neg_model = model(1)
+    neg_sent = Array[Double](num_features)
+    neg_map = math.log(priors(1))
+    for (i <- 0 until num_features) {
+      pos_map += ( pos_sent * math.log(pos_model(i)) )
+      neg_map += ( neg_sent * math.log(neg_model(i)) )
+    }
+    /* Output a sentiment level. */
+    
   }
 
-  def main(args: Array[String]) = {
-    var term_index = create_dict()
+  /* Performs 10-fold cross-validation, and applies an accuracy measure. */
+  def validation(logs: Array[Array[Double]]) = {
+
   }
+
+
 
 }
