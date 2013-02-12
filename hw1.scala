@@ -6,7 +6,8 @@
  *   To run this script with BIDMat, place this file in
  *   ${BIDMat}/src/main/scala. To compile, run "sbt compile" from project
  *   root. Class files will be in target/scala-2.9.2/classes. From there, you
- *   can run the typical "scala NaiveBayes" command.
+ *   can run:
+ *     scala -J-Xmx2g NaiveBayes
  */
 
 import scala.io._
@@ -34,10 +35,13 @@ object NaiveBayes {
   val word_mat_dir = "/Users/richard/classes/294-1/BIDMat/"
   val word_mat_name = "words.mat"
 
+  var term_index = mutable.Map.empty[String, Int]
+
   val num_documents = 2000
 
   val priors = Array(0.5, 0.5)
   val test_set_size = 100
+
 
   /* Useful. */
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -47,7 +51,6 @@ object NaiveBayes {
 
   /* Writes a dictionary of term->index to a file. */
   def create_dict(): mutable.Map[String,Int]  = {
-    val term_index = mutable.Map.empty[String, Int]
     var i = 0
 
     pos_files.par.foreach( (file: String) => {
@@ -89,7 +92,6 @@ object NaiveBayes {
 
   /* Writes a dictionary of term->index to a file. */
   def create_dict_for(): mutable.Map[String,Int]  = {
-    val term_index = mutable.Map.empty[String, Int]
     var z = 0
 
     var files = "ls %spos".format(example_dir).!!.split("\n")
@@ -136,7 +138,7 @@ object NaiveBayes {
   /* Returns a sparse matrix of features*/
   def process(read_index: Boolean = false): BIDMat.SMat = {
     // Get term_index
-    var term_index = mutable.Map.empty[String, Int]
+    term_index = mutable.Map.empty[String, Int]
     if (read_index) {
       val s = Source.fromFile(term_index_dir + term_index_filename)
       s.getLines.foreach( (line: String) => {
@@ -173,12 +175,30 @@ object NaiveBayes {
     }
 
     var sparse_words_docs: SMat = sparse(words_docs)
-    saveAs(word_mat_dir + word_mat_name, sparse_words_docs, "words_docs")
+
+    //saveAs(word_mat_dir + word_mat_name, sparse_words_docs, "words_docs")
+    // Get this error:
+    //   java.lang.NoClassDefFoundError: ncsa/hdf/hdf5lib/HDF5Constants
+
     return sparse_words_docs
   }
 
-  /* TODO */
-  def file_to_vect() = {
+  /* Given a file_path, returns a binary vector of words present. */
+  def file_to_vect(file_path: String): BIDMat.SMat = {
+    var words_vect: FMat = zeros(term_index.size, 1)
+
+    val s = Source.fromFile(file_path)
+    var t_i = -1
+    s.getLines.foreach( (line) => {
+      line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+        t_i = term_index(word)
+        if (words_vect(t_i, 1) == 0) {
+          words_vect(t_i, 1) += 1
+        }
+      })
+    })
+
+    return sparse(words_vect)
   }
 
   /* Trains a classifer, ie computing log(P(t|c)) for all t and c. */
@@ -281,6 +301,6 @@ object NaiveBayes {
   //}
 
   def main(args: Array[String]) = {
-    process(true)
+    val mat = process(true)
   }
 }
