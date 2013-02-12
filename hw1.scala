@@ -1,11 +1,14 @@
-/* Richard Hwang*/
+/* Richard Hwang and David Huang */
 /* CS294-1 */
 /* Spring 2013 */
 
-/* NOTE: To import BIDMat, make sure this file is in the BIDMat
- * directory.  Compile with:
- *   scalac -cp BIDMat.jar hw1.scala
+/* INSTRUCTIONS:
+ *   To run this script with BIDMat, place this file in
+ *   ${BIDMat}/src/main/scala. To compile, run "sbt compile" from project
+ *   root. Class files will be in target/scala-2.9.2/classes. From there, you
+ *   can run the typical "scala NaiveBayes" command.
  */
+
 import scala.io._
 import scala.sys.process._
 import scala.collection.mutable
@@ -25,6 +28,11 @@ object NaiveBayes {
 
   val term_index_dir = "/Users/richard/classes/294-1/hw1/"
   val term_index_filename = "term_index.txt"
+  val pos_files = "ls %spos".format(example_dir).!!.split("\n")
+  val neg_files = "ls %sneg".format(example_dir).!!.split("\n")
+
+  val word_mat_dir = "/Users/richard/classes/294-1/BIDMat/"
+  val word_mat_name = "words.mat"
 
   /* Useful. */
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
@@ -37,8 +45,7 @@ object NaiveBayes {
     val term_index = mutable.Map.empty[String, Int]
     var i = 0
 
-    var files = "ls %spos".format(example_dir).!!.split("\n")
-    files.par.foreach( (file: String) => {
+    pos_files.par.foreach( (file: String) => {
       val s = Source.fromFile(example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
@@ -51,8 +58,7 @@ object NaiveBayes {
     })
     println("Finished indexing positive examples")
 
-    files = "ls %sneg".format(example_dir).!!.split("\n")
-    files.par.foreach( (file: String) => {
+    neg_files.par.foreach( (file: String) => {
       val s = Source.fromFile(example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
@@ -125,6 +131,7 @@ object NaiveBayes {
 
   /* Returns a sparse matrix of features*/
   def process(read_index: Boolean = false) = {
+    // Get term_index
     if (read_index) {
       val term_index = mutable.Map.empty[String, Int]
       val s = Source.fromFile(term_index_dir + term_index_filename)
@@ -138,18 +145,26 @@ object NaiveBayes {
       val term_index = create_dict()
     }
 
-    // NOTE: do the rest from within BIDMat????
+    // NOTE: do the rest with BIDMat
+    Mat.noMKL=true
+    val a = rand(30,30)
+    println(a)
 
     // Then create doc, word matrix
-    //val pos_file_names = "ls %sneg".format(example_dir).split("\n")
-    //for (i <- 0 until pos_file_names.length) {
-    //  val s = Source.fromFile(pos_file_names(i))
+    //for (i <- 0 until pos_files.length) {
+    //  val s = Source.fromFile(pos_files(i))
     //  s.getLines.foreach( (line) => {
-    //    // TODO Fill me in
+    //    line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+    //      // Add to matrix
+    //    })
     //  })
     //}
 
-    //saveAs("d:\data\sentiment\data1.mat", a, "tokens", b, "trigrams")
+    //saveAs(word_mat_dir + word_mat_name, a, "words_docs")
+  }
+
+  /* TODO */
+  def file_to_vect() = {
   }
 
   /* Trains a classifer, ie computing log(P(t|c)) for all t and c. */
@@ -188,34 +203,30 @@ object NaiveBayes {
   }
 
   /* Classifies the sentiment level of a given document. */
-  def classify(model: Array[Array[Double]], priors: Array[Double], doc: String): Int = {
-    /* TODO: Process given document into its sparse-matrix, log-probability representation */
+  //def classify(model: Array[Array[Double]], priors: Array[Double], doc: String): Int = {
+  //  /* TODO: Process given document into its sparse-matrix, log-probability representation */
 
-    /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
-    num_features = model(0).length
-    pos_model = model(0)
-    pos_sent = Array[Double](num_features)
-    pos_map = math.log(priors(0))
-    neg_model = model(1)
-    neg_sent = Array[Double](num_features)
-    neg_map = math.log(priors(1))
-    for (i <- 0 until num_features) {
-      pos_map += ( pos_sent * math.log(pos_model(i)) )
-      neg_map += ( neg_sent * math.log(neg_model(i)) )
-    }
-    /* Output a sentiment level. */
-    
-  }
+  //  /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
+  //  num_features = model(0).length
+  //  pos_model = model(0)
+  //  pos_sent = Array[Double](num_features)
+  //  pos_map = math.log(priors(0))
+  //  neg_model = model(1)
+  //  neg_sent = Array[Double](num_features)
+  //  neg_map = math.log(priors(1))
+  //  for (i <- 0 until num_features) {
+  //    pos_map += ( pos_sent * math.log(pos_model(i)) )
+  //    neg_map += ( neg_sent * math.log(neg_model(i)) )
+  //  }
+  //  /* Output a sentiment level. */
+  //  
+  //}
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
   def validation(logs: Array[Array[Double]]) = {
   }
 
   def main(args: Array[String]) = {
-    //Mat.noMKL=true
     process(true)
   }
-
-
-
 }
