@@ -34,6 +34,8 @@ object NaiveBayes {
   val word_mat_dir = "/Users/richard/classes/294-1/BIDMat/"
   val word_mat_name = "words.mat"
 
+  val num_documents = 2000
+
   /* Useful. */
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     val p = new java.io.PrintWriter(f)
@@ -128,12 +130,11 @@ object NaiveBayes {
     return term_index;
   }
 
-
   /* Returns a sparse matrix of features*/
-  def process(read_index: Boolean = false) = {
+  def process(read_index: Boolean = false): BIDMat.SMat = {
     // Get term_index
+    var term_index = mutable.Map.empty[String, Int]
     if (read_index) {
-      val term_index = mutable.Map.empty[String, Int]
       val s = Source.fromFile(term_index_dir + term_index_filename)
       s.getLines.foreach( (line: String) => {
         line.split(",") match {
@@ -142,25 +143,35 @@ object NaiveBayes {
         }
       })
     } else {
-      val term_index = create_dict()
+      term_index = create_dict()
     }
 
-    // NOTE: do the rest with BIDMat
-    Mat.noMKL=true
-    val a = rand(30,30)
-    println(a)
+    // Construct words_docs matrix
+    val num_words = term_index.size
 
-    // Then create doc, word matrix
-    //for (i <- 0 until pos_files.length) {
-    //  val s = Source.fromFile(pos_files(i))
-    //  s.getLines.foreach( (line) => {
-    //    line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
-    //      // Add to matrix
-    //    })
-    //  })
-    //}
+    Mat.noMKL = true
+    var words_docs: FMat = zeros(num_words, num_documents)
 
-    //saveAs(word_mat_dir + word_mat_name, a, "words_docs")
+    for (i <- 0 until pos_files.length) {
+      val s = Source.fromFile(example_dir + "pos/" + pos_files(i))
+      s.getLines.foreach( (line) => {
+        line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+          words_docs(term_index(word), i) += 1
+        })
+      })
+    }
+    for (i <- 0 until neg_files.length) {
+      val s = Source.fromFile(example_dir + "neg/" + neg_files(i))
+      s.getLines.foreach( (line) => {
+        line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+          words_docs(term_index(word), i) += 1
+        })
+      })
+    }
+
+    words_docs = sparse(words_docs)
+    saveAs(word_mat_dir + word_mat_name, words_docs, "words_docs")
+    return words_docs
   }
 
   /* TODO */
