@@ -36,6 +36,9 @@ object NaiveBayes {
 
   val num_documents = 2000
 
+  val priors = Array(0.5, 0.5)
+  val test_set_size = 100
+
   /* Useful. */
   def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
     val p = new java.io.PrintWriter(f)
@@ -216,7 +219,7 @@ object NaiveBayes {
   /* Classifies the sentiment level of a given document. */
   def classify(model: Array[Array[Double]], priors: Array[Double], doc: Array[Int]): Int = {
     /* TODO: Process given document into its sparse-matrix, log-probability representation */
-    
+
     val num_features = model(0).length
     var pmat = Array[Double](num_features)
     /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
@@ -232,29 +235,49 @@ object NaiveBayes {
     println(neg_map)
     /* Output a sentiment level. */
     var sent = 100  //a distinctly non-appropriate value
-    if (pos_map > neg_map) {
+    if (pos_map >= neg_map) {
       sent = 1
-    } else if (pos_map < neg_map) {
-      sent = -1
     } else {
-      sent = 0
+      sent = -1
     }
     return sent
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
   def validation(docs: String): Array[Double] = {
-    /* Loop 10 times. */
-      /* Segregate training set from test set. */
-
-      /* Compute model. */
-
-      /* Classify. */
-
-      /* Evaluate. */
-
+    //PSEUDO-CODE//
+    /* Loop 10 times; segregate training set from test set. */
+    var test_set = 
+    var training_set = 
+    var label = //1 or -1
+    var result = 0
+    var set_correct = 0
+    var set_accuracy
+    var best_accuracy = 0.0
+    var best_other_measure = 0.0
+    var best_set = 0
+    for (i <- 0 until 10) {
+      test_set = docs(i)
+      training_set = docs - doc(i)
+      /* Process into appropriate matrices & compute model. */
+      val test_mat = 
+      val training_mat = 
+      val model = train(training_mat)
+      /* Classify & evaluate */
+      for (i <- 0 until test_set_size) {
+        result = classify(model, priors, test_mat(i))
+        if (result == label) {
+          set_correct+=1
+        }
+        set_accuracy = set_correct / test_set_size
+      }
+      if (set_accuracy > best_accuracy) {
+        best_accuracy = set_accuracy
+        best_set = i
+      }
+    }
     /* Determine best model. */
-    return Array(100.0, 100.0)
+    return Array(best_accuracy, best_other_measure)
   }
 
   def main(args: Array[String]) = {
