@@ -2,17 +2,28 @@
 /* CS294-1 */
 /* Spring 2013 */
 
+/* NOTE: To import BIDMat, make sure this file is in the BIDMat
+ * directory.  Compile with:
+ *   scalac -cp BIDMat.jar hw1.scala
+ */
 import scala.io._
 import scala.sys.process._
 import scala.collection.mutable
 import scala.math
 import java.io._
+import java.util.StringTokenizer
+import BIDMat.{Mat, FMat, DMat, IMat, CMat, BMat, CSMat, SMat, SDMat, GMat, GIMat, GSMat, HMat}
+import BIDMat.MatFunctions._
+import BIDMat.SciFunctions._
+import BIDMat.Solvers._
+import BIDMat.Plotting._
 
 object NaiveBayes {
 
   val example_dir =
     "/Users/richard/classes/294-1/hw1/review_polarity/txt_sentoken/"
 
+  val term_index_dir = "/Users/richard/classes/294-1/hw1/"
   val term_index_filename = "term_index.txt"
 
   /* Useful. */
@@ -65,15 +76,62 @@ object NaiveBayes {
     return term_index;
   }
 
+  /* Writes a dictionary of term->index to a file. */
+  def create_dict_for(): mutable.Map[String,Int]  = {
+    val term_index = mutable.Map.empty[String, Int]
+    var z = 0
+
+    var files = "ls %spos".format(example_dir).!!.split("\n")
+    for (i <- 0 until files.length) {
+      val s = Source.fromFile(example_dir + "pos/" + files(i))
+      s.getLines.foreach( (line: String) => {
+        var words = line.split("[\\s.,();:!?&\"]+")
+        for (k <- 0 until words.length) {
+          var word = words(k)
+          if (!term_index.keySet.exists(_ == word)) {
+            term_index(word) = z
+            z += 1
+          }
+        }
+      })
+    }
+    println("Finished indexing positive examples")
+
+    files = "ls %sneg".format(example_dir).!!.split("\n")
+    files.par.foreach( (file: String) => {
+      val s = Source.fromFile(example_dir + "neg/" + file)
+      s.getLines.foreach( (line: String) => {
+          line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+            if (!term_index.keySet.exists(_ == word)) {
+              term_index(word) = z
+              z += 1
+            }
+          })
+      })
+    })
+    println("Finished indexing negative examples")
+
+    // Writing results to file
+    printToFile(new File(term_index_filename))(p => {
+      term_index.foreach(t => {
+        p.println(t._1 + "," + t._2)
+      })
+    })
+    println("Wrote to " + term_index_filename)
+
+    return term_index;
+  }
+
+
   /* Returns a sparse matrix of features*/
-  def process(read_index: Boolean = False) = {
+  def process(read_index: Boolean = false) = {
     if (read_index) {
       val term_index = mutable.Map.empty[String, Int]
-      val s = Source.fromFile(term_index_filename)
+      val s = Source.fromFile(term_index_dir + term_index_filename)
       s.getLines.foreach( (line: String) => {
         line.split(",") match {
           case Array(str, num) => { term_index(str) = num.toInt }
-          case _ => error("too many commas")
+          case _ => sys.error("too many commas")
         }
       })
     } else {
@@ -83,13 +141,15 @@ object NaiveBayes {
     // NOTE: do the rest from within BIDMat????
 
     // Then create doc, word matrix
-    val pos_file_names = "ls %sneg".format(example_dir).split("\n")
-    for (i <- 0 until pos_file_names.length) {
-      val s = Source.fromFile(pos_file_names(i))
-      s.getLines.foreach( (line) => {
-        // TODO Fill me in
-      })
-  }
+    //val pos_file_names = "ls %sneg".format(example_dir).split("\n")
+    //for (i <- 0 until pos_file_names.length) {
+    //  val s = Source.fromFile(pos_file_names(i))
+    //  s.getLines.foreach( (line) => {
+    //    // TODO Fill me in
+    //  })
+    //}
+
+    //saveAs("d:\data\sentiment\data1.mat", a, "tokens", b, "trigrams")
   }
 
   /* Trains a classifer, ie computing log(P(t|c)).
@@ -133,7 +193,8 @@ object NaiveBayes {
   }
 
   def main(args: Array[String]) = {
-    var term_index = create_dict()
+    //Mat.noMKL=true
+    process(true)
   }
 
 }
