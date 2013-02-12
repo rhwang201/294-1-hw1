@@ -3,3 +3,6 @@
 review_polarity/
 *.class
 *.swp
+*.aux
+*.log
+*.gz
