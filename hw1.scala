@@ -216,6 +216,7 @@ object NaiveBayes {
   /* Classifies the sentiment level of a given document. */
   def classify(model: Array[Array[Double]], priors: Array[Double], doc: Array[Int]): Int = {
     /* TODO: Process given document into its sparse-matrix, log-probability representation */
+    
     val num_features = model(0).length
     var pmat = Array[Double](num_features)
     /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
@@ -242,8 +243,18 @@ object NaiveBayes {
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
-  def validation(docs: Array[Array[Double]]) = {
-    
+  def validation(docs: String): Array[Double] = {
+    /* Loop 10 times. */
+      /* Segregate training set from test set. */
+
+      /* Compute model. */
+
+      /* Classify. */
+
+      /* Evaluate. */
+
+    /* Determine best model. */
+    return Array(100.0, 100.0)
   }
 
   def main(args: Array[String]) = {
