@@ -153,12 +153,12 @@ object NaiveBayes {
   }
 
   /* Trains a classifer, ie computing log(P(t|c)) for all t and c. */
-  def train(doc_fmat: Array[Array[Array[Int]]]): Array[Array[Double]] = { //Takes in Integer frequency matrix; outputs Double log-probability matrix
+  def train(docs_fmat: Array[Array[Array[Int]]]): Array[Array[Double]] = { //Takes in Integer frequency matrix; outputs Double log-probability matrix
     /* Takes in |V| x |D| matrix doc_fmat of DOCument feature-Frequency MATrix*/
-    val pos_doc_fmat = doc_fmat(0)  //positive documents
-    val neg_doc_fmat = doc_fmat(1)  //negative documents
-    val num_features = pos_doc_fmat.length  //number of rows/features
-    val num_docs = pos_doc_fmat(0).length //number of columns/documents
+    val pos_docs_fmat = docs_fmat(0)  //positive documents
+    val neg_docs_fmat = docs_fmat(1)  //negative documents
+    val num_features = pos_docs_fmat.length  //number of rows/features
+    val num_docs = pos_docs_fmat(0).length //number of columns/documents
     /* Compile into two |V| x 1 matrices pos/neg_freq of aggregate feature-Frequency MATrix */
     val pos_freq = new Array[Double](num_features)  //positive feature frequency matrix
     val neg_freq = new Array[Double](num_features)  //negative feature frequency matrix
@@ -188,27 +188,36 @@ object NaiveBayes {
   }
 
   /* Classifies the sentiment level of a given document. */
-  def classify(model: Array[Array[Double]], priors: Array[Double], doc: String): Int = {
+  def classify(model: Array[Array[Double]], priors: Array[Double], doc: Array[Int]): Int = {
     /* TODO: Process given document into its sparse-matrix, log-probability representation */
-
+    val num_features = model(0).length
+    var pmat = Array[Double](num_features)
     /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
-    num_features = model(0).length
-    pos_model = model(0)
-    pos_sent = Array[Double](num_features)
-    pos_map = math.log(priors(0))
-    neg_model = model(1)
-    neg_sent = Array[Double](num_features)
-    neg_map = math.log(priors(1))
+    val pos_model = model(0)
+    var pos_map = math.log(priors(0))
+    val neg_model = model(1)
+    var neg_map = math.log(priors(1))
     for (i <- 0 until num_features) {
-      pos_map += ( pos_sent * math.log(pos_model(i)) )
-      neg_map += ( neg_sent * math.log(neg_model(i)) )
+      pos_map += ( doc(i) * pos_model(i) )
+      neg_map += ( doc(i) * neg_model(i) )
     }
+    println(pos_map)
+    println(neg_map)
     /* Output a sentiment level. */
-    
+    var sent = 100  //a distinctly non-appropriate value
+    if (pos_map > neg_map) {
+      sent = 1
+    } else if (pos_map < neg_map) {
+      sent = -1
+    } else {
+      sent = 0
+    }
+    return sent
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
-  def validation(logs: Array[Array[Double]]) = {
+  def validation(docs: Array[Array[Double]]) = {
+    
   }
 
   def main(args: Array[String]) = {
