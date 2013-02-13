@@ -21,6 +21,7 @@ import BIDMat.MatFunctions._
 import BIDMat.SciFunctions._
 import BIDMat.Solvers._
 import BIDMat.Plotting._
+import stemmer.Stemmer
 
 object NaiveBayes {
 
@@ -42,6 +43,8 @@ object NaiveBayes {
   val word_mat_name = "words.mat"
 
   var term_index = mutable.Map.empty[String, Int]
+
+  var stemmer = new Stemmer() // TODO
 
   val num_documents = 2000
 
@@ -66,6 +69,14 @@ object NaiveBayes {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
                 !term_index.keySet.exists(_ == word)) {
+              //stemmer.add(word)
+              //stemmer.step1()
+              //stemmer.step2()
+              //stemmer.step3()
+              //stemmer.step4()
+              //stemmer.step5a()
+              //stemmer.step5b()
+              //term_index(stemmer.b) = i
               term_index(word) = i
               i += 1
             }
@@ -80,6 +91,14 @@ object NaiveBayes {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
                 !term_index.keySet.exists(_ == word)) {
+              //stemmer.add(word)
+              //stemmer.step1()
+              //stemmer.step2()
+              //stemmer.step3()
+              //stemmer.step4()
+              //stemmer.step5a()
+              //stemmer.step5b()
+              //term_index(stemmer.b) = i
               term_index(word) = i
               i += 1
             }
@@ -111,6 +130,14 @@ object NaiveBayes {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
           var word = words(k)
+          //stemmer.add(word)
+          //stemmer.step1()
+          //stemmer.step2()
+          //stemmer.step3()
+          //stemmer.step4()
+          //stemmer.step5a()
+          //stemmer.step5b()
+          //word = stemmer.b
           if (!term_index.keySet.exists(_ == word)) {
             term_index(word) = z
             z += 1
@@ -127,6 +154,14 @@ object NaiveBayes {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
           var word = words(k)
+          stemmer.add(word)
+          stemmer.step1()
+          stemmer.step2()
+          stemmer.step3()
+          stemmer.step4()
+          stemmer.step5a()
+          stemmer.step5b()
+          word = stemmer.b
           if (!term_index.keySet.exists(_ == word)) {
             term_index(word) = z
             z += 1
@@ -175,6 +210,14 @@ object NaiveBayes {
       val s = Source.fromFile(example_dir + "pos/" + pos_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+          //stemmer.add(word)
+          //stemmer.step1()
+          //stemmer.step2()
+          //stemmer.step3()
+          //stemmer.step4()
+          //stemmer.step5a()
+          //stemmer.step5b()
+          //var stemmed_word = stemmer.b
           if (!stop_words.contains(word))
             words_pos_docs(term_index(word), i) += 1
         })
@@ -184,6 +227,14 @@ object NaiveBayes {
       val s = Source.fromFile(example_dir + "neg/" + neg_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+          //stemmer.add(word)
+          //stemmer.step1()
+          //stemmer.step2()
+          //stemmer.step3()
+          //stemmer.step4()
+          //stemmer.step5a()
+          //stemmer.step5b()
+          //var stemmed_word = stemmer.b
           if (!stop_words.contains(word))
             words_neg_docs(term_index(word), i) += 1
         })
@@ -210,6 +261,13 @@ object NaiveBayes {
     var t_i = -1
     s.getLines.foreach( (line) => {
       line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
+        //stemmer.add(word)
+        //stemmer.step1()
+        //stemmer.step2()
+        //stemmer.step3()
+        //stemmer.step4()
+        //stemmer.step5a()
+        //stemmer.step5b()
         t_i = term_index(word)
         if (words_vect(t_i, 1) == 0) {
           words_vect(t_i, 1) += 1
@@ -246,7 +304,7 @@ object NaiveBayes {
   }
 
   /* Classifies the sentiment level of a given document. */
-  def classify(model: Array[BIDMat.DMat], priors: Array[Double], doc: BIDMat.SMat): Int = {    
+  def classify(model: Array[BIDMat.DMat], priors: Array[Double], doc: BIDMat.SMat): Int = {
     /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
     val pos_model = model(0)
     var pos_map = math.log(priors(0))
@@ -276,56 +334,56 @@ object NaiveBayes {
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
-  def validate(docs: Array[BIDMat.SMat], folds: Int = n_folds): Double = {
-    //PSEUDO-CODE
-    var test_set = ""
-    var training_set = ""
-    var label = 0 //1 or -1
-    var result = 0
+  //def validate(docs: Array[BIDMat.SMat], folds: Int = n_folds): Double = {
+  //  //PSEUDO-CODE
+  //  var test_set = ""
+  //  var training_set = ""
+  //  var label = 0 //1 or -1
+  //  var result = 0
 
-    var cur_precision = 0.0
-    var cur_recall = 0.0
+  //  var cur_precision = 0.0
+  //  var cur_recall = 0.0
 
-    var f_measure_sum = 0.0
+  //  var f_measure_sum = 0.0
 
-    /* Loop 10 times; segregate training set from test set. */
-    for (i <- 0 until 10) {
-      var true_positives = 0
-      var false_positives = 0
-      var false_negatives = 0
+  //  /* Loop 10 times; segregate training set from test set. */
+  //  for (i <- 0 until 10) {
+  //    var true_positives = 0
+  //    var false_positives = 0
+  //    var false_negatives = 0
 
-      test_set = "" //docs(i) TODO
-      training_set = "" //docs - doc(i)
+  //    test_set = "" //docs(i) TODO
+  //    training_set = "" //docs - doc(i)
 
-      /* Process into appropriate matrices & compute model. */
-      val test_mat = Array(1, 2, 3) // TODO
-      val training_mat = Array(1, 2, 3)
-      val model = train(training_mat)
+  //    /* Process into appropriate matrices & compute model. */
+  //    val test_mat = Array(1, 2, 3) // TODO
+  //    val training_mat = Array(1, 2, 3)
+  //    val model = train(training_mat)
 
-      /* Classify & sort */
-      for (i <- 0 until test_set_size) {
-        result = classify(model, priors, test_mat(i))
-        if (result == label && label == 1)
-          true_positives += 1
-        else if (result != label && label == 1)
-          false_positives += 1
-        else if (result != label && label == -1)
-          false_negatives += 1
-      }
+  //    /* Classify & sort */
+  //    for (i <- 0 until test_set_size) {
+  //      result = classify(model, priors, test_mat(i))
+  //      if (result == label && label == 1)
+  //        true_positives += 1
+  //      else if (result != label && label == 1)
+  //        false_positives += 1
+  //      else if (result != label && label == -1)
+  //        false_negatives += 1
+  //    }
 
-      cur_precision = true_positives / (true_positives + false_positives)
-      cur_recall = true_positives / (true_positives + false_negatives)
+  //    cur_precision = true_positives / (true_positives + false_positives)
+  //    cur_recall = true_positives / (true_positives + false_negatives)
 
-      f_measure_sum += f_measure(cur_precision, cur_recall, 1)
-    }
+  //    f_measure_sum += f_measure(cur_precision, cur_recall, 1)
+  //  }
 
-    val f_measure_average = f_measure_sum / folds
-    return f_measure_average
-  }
+  //  val f_measure_average = f_measure_sum / folds
+  //  return f_measure_average
+  //}
 
   def main(args: Array[String]) = {
-    create_dict()
-    //val mat = process(true)
+    //create_dict()
+    val mat = process(true)
     //println(mat(0)(term_index("marilyn"),0))
     //println(mat(0)(term_index("campbell"),0))
   }
