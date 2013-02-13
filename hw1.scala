@@ -347,9 +347,9 @@ object NaiveBayes {
     /* Loop 10 times; segregate training set from test set. */
     for (i <- 0 until folds) {
       println("Commencing fold number %d".format(i))
-      var true_positives = 0
-      var false_positives = 0
-      var false_negatives = 0
+      var true_positives = 0.0
+      var false_positives = 0.0
+      var false_negatives = 0.0
       /* Process into appropriate matrices & compute model. */
       val pos_test_set: BIDMat.SMat = pos_docs(0 to num_features-1, i*test_set_size to (i+1)*test_set_size-1)
       val pos_training_set: BIDMat.SMat = pos_docs(0 to num_features-1, 0 to i*test_set_size-1) \ pos_docs(0 to num_features-1, (i+1)*test_set_size to num_docs-1) 
@@ -361,9 +361,7 @@ object NaiveBayes {
       for (i <- 0 until test_set_size) {
         pos_result = classify(model, priors, pos_test_set(?, i))
         neg_result = classify(model, priors, neg_test_set(?, i))
-        if (pos_result == 1)
-          true_positives += 1
-        else if (neg_result == -1)
+        if (pos_result == 1 || neg_result == -1)
           true_positives += 1
         else if (pos_result == -1)
           false_negatives += 1
