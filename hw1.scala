@@ -212,67 +212,52 @@ object NaiveBayes {
   }
 
   /* Trains a classifer, ie computing log(P(t|c)) for all t and c. */
-  def train(docs_fmat: Array[BIDMat.SMat]): Array[Array[Double]] = { //Takes in Integer frequency matrix; outputs Double log-probability matrix
+  def train(docs_fmat: Array[BIDMat.SMat]): Array[BIDMat.DMat] = { //Takes in Integer frequency matrix; outputs Double log-probability matrix
     /* Takes in |V| x |D| matrix doc_fmat of DOCument feature-Frequency MATrix*/
     val pos_docs_fmat: BIDMat.SMat = docs_fmat(0)  //positive documents
     val neg_docs_fmat: BIDMat.SMat = docs_fmat(1)  //negative documents
-    val num_features: Int = pos_docs_fmat.length  //number of rows/features
-    val num_docs: Int = pos_docs_fmat(0).length //number of columns/documents
+    val num_features: Int = pos_docs_fmat.nr  //number of rows/features
+    val num_docs: Int = pos_docs_fmat.nc //number of columns/documents
 
     /* Compile into two |V| x 1 matrices pos/neg_freq of aggregate feature-Frequency MATrix */
     // NOTE: You'll want to use BITMat matrices
-    val pos_freq = new Array[Double](num_features)  //positive feature frequency matrix
-    val neg_freq = new Array[Double](num_features)  //negative feature frequency matrix
-    var pos_sum = 0.0 //total word count in positive documents
-    var neg_sum = 0.0 //total word count in negative documents
-    for (i <- 0 until num_features) { //iterate through rows/features
-      var pos_feature = 0.0 //word count for a particular word in positive documents
-      var neg_feature = 0.0 //word count for a particular word in negative documents
-      for (j <- 0 until num_docs) { //iterate through columns/documents
-        pos_feature += pos_docs_fmat(i, j).toDouble //aggregate the same feature across all positive documents
-        neg_feature += neg_docs_fmat(i, j).toDouble //aggregate the same feature across all negative documents
-      }
-      pos_freq(i) = pos_feature //populate i_th row/feature in positive document frequency matrix
-      pos_sum += pos_feature //augment total word count in positive documents
-      neg_freq(i) = neg_feature //populate i_th row/feature in negative document frequency matrix
-      neg_sum += neg_feature //augment total word count in negative documents
-    }
+    val pos_freq: BIDMat.FMat = sum(pos_docs_fmat.t).t  //positive feature frequency matrix
+    val pos_word_count: Double = sum(pos_freq)(0)
+    val neg_freq: BIDMat.FMat = sum(neg_docs_fmat.t).t  //negative feature frequency matrix
+    val neg_word_count: Double = sum(neg_freq)(0)
     /* Construct two probability matrices for log(P(t|c)) counterpart of frequency entries */
-    var pos_prob = new Array[Double](num_features)  //positive feature log-probability matrix
-    var neg_prob = new Array[Double](num_features)  //negative feature log-probability matrix
+    var pos_prob: BIDMat.DMat = zeros(num_features, 1)  //positive feature log-probability matrix
+    var neg_prob: BIDMat.DMat = zeros(num_features, 1)  //negative feature log-probability matrix
     for (i <- 0 until num_features) { //iterate through rows/features
-      pos_prob(i) = math.log( pos_freq(i) / pos_sum ) //compute & populate i_th row/feature in positive log-probability matrix
-      neg_prob(i) = math.log( neg_freq(i) / neg_sum ) //compute & populate i_th row/feature in negative log-probability matrix
+      pos_prob(i) = math.log( pos_freq(i) / pos_word_count ) //compute & populate i_th row/feature in positive log-probability matrix
+      neg_prob(i) = math.log( neg_freq(i) / neg_word_count ) //compute & populate i_th row/feature in negative log-probability matrix
     }
-    val pmat = Array(pos_prob, neg_prob)  //combine positive & negative log-probability matrix into one Probability MATrix
-    return pmat  //note that output log-probabilities are negative (i.e. more frequent terms show up as less frequent terms => take absolute value before further computation?)
+    val model = Array(pos_prob, neg_prob)  //combine positive & negative log-probability matrix into one Probability MATrix
+    return model
   }
 
   /* Classifies the sentiment level of a given document. */
-  def classify(model: Array[Array[Double]], priors: Array[Double], doc: Array[Int]): Int = {
-    /* TODO: Process given document into its sparse-matrix, log-probability representation */
-
-    val num_features = model(0).length
-    var pmat = Array[Double](num_features)
+  def classify(model: Array[BIDMat.DMat], priors: Array[Double], doc: BIDMat.SMat): Int = {    
     /* Compute Maximum A-Posteriori (MAP) estimate for positive/negative sentiment */
     val pos_model = model(0)
     var pos_map = math.log(priors(0))
     val neg_model = model(1)
     var neg_map = math.log(priors(1))
-    for (i <- 0 until num_features) {
-      pos_map += ( doc(i) * pos_model(i) )
-      neg_map += ( doc(i) * neg_model(i) )
-    }
+    val num_features = pos_model.nr
+    var pmat = zeros(num_features, 1)
+    val doc_freq_mat = full(doc)
+    pos_map += sum(doc_freq_mat *@ pos_model)(0)
+    neg_map += sum(doc_freq_mat *@ neg_model)(0)
     println(pos_map)
     println(neg_map)
     /* Output a sentiment level. */
-    var sent = 100  //a distinctly non-appropriate value
+    var sentiment = 100  //a distinctly non-appropriate value
     if (pos_map >= neg_map) {
-      sent = 1
+      sentiment = 1
     } else {
-      sent = -1
+      sentiment = -1
     }
-    return sent
+    return sentiment
   }
 
   /* Returns the beta-weighted F-measure. */
@@ -282,7 +267,7 @@ object NaiveBayes {
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
-  def validate(docs: String, folds: Int = n_folds): Double = {
+  def validate(docs: Array[BIDMat.SMat], folds: Int = n_folds): Double = {
     //PSEUDO-CODE
     var test_set = ""
     var training_set = ""
