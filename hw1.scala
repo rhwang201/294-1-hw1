@@ -32,8 +32,11 @@ object NaiveBayes {
   val term_index_dir = "/Users/richard/classes/294-1/hw1/"
   val david_term_index_dir = "/Users/Davidius/294-1-hw1/"
   val term_index_filename = "term_index.txt"
-  val pos_files = "ls %spos".format(example_dir).!!.split("\n")
-  val neg_files = "ls %sneg".format(example_dir).!!.split("\n")
+  val pos_files = "ls %spos".format(david_example_dir).!!.split("\n")
+  val neg_files = "ls %sneg".format(david_example_dir).!!.split("\n")
+
+  val stop_words = List("the","is","which","at","on","a","but","we","have",
+                        "had","about","for","it","who","to","with","as")
 
   val word_mat_dir = "/Users/Davidius/BIDMat/"
   val word_mat_name = "words.mat"
@@ -58,7 +61,8 @@ object NaiveBayes {
       val s = Source.fromFile(david_example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
-            if (!term_index.keySet.exists(_ == word)) {
+            if (!stop_words.contains(word) &&
+                !term_index.keySet.exists(_ == word)) {
               term_index(word) = i
               i += 1
             }
@@ -71,7 +75,8 @@ object NaiveBayes {
       val s = Source.fromFile(david_example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
-            if (!term_index.keySet.exists(_ == word)) {
+            if (!stop_words.contains(word) &&
+                !term_index.keySet.exists(_ == word)) {
               term_index(word) = i
               i += 1
             }
@@ -113,17 +118,19 @@ object NaiveBayes {
     println("Finished indexing positive examples")
 
     files = "ls %sneg".format(david_example_dir).!!.split("\n")
-    files.par.foreach( (file: String) => {
-      val s = Source.fromFile(david_example_dir + "neg/" + file)
+    for (i <- 0 until files.length) {
+      val s = Source.fromFile(david_example_dir + "neg/" + files(i))
       s.getLines.foreach( (line: String) => {
-          line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
-            if (!term_index.keySet.exists(_ == word)) {
-              term_index(word) = z
-              z += 1
-            }
-          })
+        var words = line.split("[\\s.,();:!?&\"]+")
+        for (k <- 0 until words.length) {
+          var word = words(k)
+          if (!term_index.keySet.exists(_ == word)) {
+            term_index(word) = z
+            z += 1
+          }
+        }
       })
-    })
+    }
     println("Finished indexing negative examples")
 
     // Writing results to file
@@ -165,18 +172,22 @@ object NaiveBayes {
       val s = Source.fromFile(david_example_dir + "pos/" + pos_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
-          words_pos_docs(term_index(word), i) += 1
+          if (!stop_words.contains(word))
+            words_pos_docs(term_index(word), i) += 1
         })
       })
     }
+    println("Finshed processing positive files.")
     for (i <- 0 until neg_files.length) {
       val s = Source.fromFile(david_example_dir + "neg/" + neg_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
-          words_neg_docs(term_index(word), i) += 1
+          if (!stop_words.contains(word))
+            words_neg_docs(term_index(word), i) += 1
         })
       })
     }
+    println("Finished processing negative files.")
 
     var sparse_words_pos_docs: SMat = sparse(words_pos_docs)
     var sparse_words_neg_docs: SMat = sparse(words_neg_docs)
@@ -225,11 +236,13 @@ object NaiveBayes {
     /* Construct two probability matrices for log(P(t|c)) counterpart of frequency entries */
     var pos_prob: BIDMat.DMat = zeros(num_features, 1)  //positive feature log-probability matrix
     var neg_prob: BIDMat.DMat = zeros(num_features, 1)  //negative feature log-probability matrix
+    println("Begin building model...")
     for (i <- 0 until num_features) { //iterate through rows/features
       pos_prob(i) = math.log( pos_freq(i) / pos_word_count ) //compute & populate i_th row/feature in positive log-probability matrix
       neg_prob(i) = math.log( neg_freq(i) / neg_word_count ) //compute & populate i_th row/feature in negative log-probability matrix
     }
     val model = Array(pos_prob, neg_prob)  //combine positive & negative log-probability matrix into one Probability MATrix
+    println("Model completed!")
     return model
   }
 
@@ -245,8 +258,8 @@ object NaiveBayes {
     val doc_freq_mat = full(doc)  //converts an SMat into an FMat
     pos_map += sum(doc_freq_mat *@ pos_model)(0)
     neg_map += sum(doc_freq_mat *@ neg_model)(0)
-    println(pos_map)
-    println(neg_map)
+    //println(pos_map)
+    //println(neg_map)
     /* Output a sentiment level. */
     var sentiment = 100  //a distinctly non-appropriate value
     if (pos_map >= neg_map) {
@@ -310,9 +323,12 @@ object NaiveBayes {
   }
 
   def main(args: Array[String]) = {
+    create_dict()
     val mat = process(true)
-    println(mat(0)(term_index("marilyn"),0))
-    println(mat(0)(term_index("campbell"),0))
+    train(mat)
+
+    //println(mat(0)(term_index("marilyn"),0))
+    //println(mat(0)(term_index("campbell"),0))
   }
 
 }

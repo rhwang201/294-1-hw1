@@ -18,11 +18,9 @@
 \maketitle
 
 \section{Our Solution}
-We followed advice in the assignment statement, splitting the text with the regex "[\textbackslash \textbackslash s.,();:!?\&\textbackslash"]+" and indexing each word.  Afterwards, we constructed a sparse matrix, with words as rows and documents as columns
+We followed advice in the assignment statement, splitting the text with the regex "[\textbackslash \textbackslash s.,();:!?\&\textbackslash"]+" and indexing each word, except for stopwords such as "the", "and", "or", "a", and "of".  Afterwards, we constructed a sparse matrix, with words as rows and documents as columns.
 \section{Smoothing/Backoff}
 
-\section{Refinement Effects}
-
 \section{Performance}
-
+For some reason, indexing the words was intolerably slow.  We tried using foreach, for loops, String.split() and StringTokenizer, and for loops and split turned out to be the fastest combination.  It still took at least 10 minutes to index all the words, though.  Constructing the word-document matrix, however, was very fast: about 7 seconds.
 \end{document}
