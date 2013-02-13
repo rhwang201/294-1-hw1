@@ -33,8 +33,8 @@ object NaiveBayes {
   val term_index_dir = "/Users/richard/classes/294-1/hw1/"
   val david_term_index_dir = "/Users/Davidius/294-1-hw1/"
   val term_index_filename = "term_index.txt"
-  val pos_files = "ls %spos".format(david_example_dir).!!.split("\n")
-  val neg_files = "ls %sneg".format(david_example_dir).!!.split("\n")
+  val pos_files = "ls %spos".format(example_dir).!!.split("\n")
+  val neg_files = "ls %sneg".format(example_dir).!!.split("\n")
 
   val stop_words = List("the","is","which","at","on","a","but","we","have",
                         "had","about","for","it","who","to","with","as")
@@ -61,7 +61,7 @@ object NaiveBayes {
     var i = 0
 
     pos_files.par.foreach( (file: String) => {
-      val s = Source.fromFile(david_example_dir + "pos/" + file)
+      val s = Source.fromFile(example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
@@ -83,7 +83,7 @@ object NaiveBayes {
     println("Finished indexing positive examples")
 
     neg_files.par.foreach( (file: String) => {
-      val s = Source.fromFile(david_example_dir + "neg/" + file)
+      val s = Source.fromFile(example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
@@ -120,9 +120,9 @@ object NaiveBayes {
   def create_dict_for(): mutable.Map[String,Int]  = {
     var z = 0
 
-    var files = "ls %spos".format(david_example_dir).!!.split("\n")
+    var files = "ls %spos".format(example_dir).!!.split("\n")
     for (i <- 0 until files.length) {
-      val s = Source.fromFile(david_example_dir + "pos/" + files(i))
+      val s = Source.fromFile(example_dir + "pos/" + files(i))
       s.getLines.foreach( (line: String) => {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
@@ -144,9 +144,9 @@ object NaiveBayes {
     }
     println("Finished indexing positive examples")
 
-    files = "ls %sneg".format(david_example_dir).!!.split("\n")
+    files = "ls %sneg".format(example_dir).!!.split("\n")
     for (i <- 0 until files.length) {
-      val s = Source.fromFile(david_example_dir + "neg/" + files(i))
+      val s = Source.fromFile(example_dir + "neg/" + files(i))
       s.getLines.foreach( (line: String) => {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
@@ -185,7 +185,7 @@ object NaiveBayes {
     val doc_mats = new Array[BIDMat.SMat](2)
     term_index = mutable.Map.empty[String, Int]
     if (read_index) {
-      val s = Source.fromFile(david_term_index_dir + term_index_filename)
+      val s = Source.fromFile(term_index_dir + term_index_filename)
       s.getLines.foreach( (line: String) => {
         line.split(",") match {
           case Array(str, num) => { term_index(str) = num.toInt }
@@ -204,7 +204,7 @@ object NaiveBayes {
     var words_neg_docs: FMat = zeros(num_words, num_documents / 2)
 
     for (i <- 0 until pos_files.length) {
-      val s = Source.fromFile(david_example_dir + "pos/" + pos_files(i))
+      val s = Source.fromFile(example_dir + "pos/" + pos_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
           //stemmer.add(word)
@@ -220,9 +220,9 @@ object NaiveBayes {
         })
       })
     }
-    println("Finshed processing positive files.")
+    println("Finished processing positive files.")
     for (i <- 0 until neg_files.length) {
-      val s = Source.fromFile(david_example_dir + "neg/" + neg_files(i))
+      val s = Source.fromFile(example_dir + "neg/" + neg_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
           //stemmer.add(word)
@@ -286,7 +286,6 @@ object NaiveBayes {
     val num_docs: Int = pos_docs_fmat.nc //number of columns/documents
 
     /* Compile into two |V| x 1 matrices pos/neg_freq of aggregate feature-Frequency MATrix */
-    // NOTE: You'll want to use BITMat matrices
     val pos_freq: BIDMat.FMat = sum(pos_docs_fmat.t).t  //positive feature frequency matrix
     val pos_word_count: Double = sum(pos_freq)(0)
     val neg_freq: BIDMat.FMat = sum(neg_docs_fmat.t).t  //negative feature frequency matrix
@@ -335,58 +334,6 @@ object NaiveBayes {
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
-<<<<<<< HEAD
-  //def validate(docs: Array[BIDMat.SMat], folds: Int = n_folds): Double = {
-  //  //PSEUDO-CODE
-  //  var test_set = ""
-  //  var training_set = ""
-  //  var label = 0 //1 or -1
-  //  var result = 0
-
-  //  var cur_precision = 0.0
-  //  var cur_recall = 0.0
-
-  //  var f_measure_sum = 0.0
-
-  //  /* Loop 10 times; segregate training set from test set. */
-  //  for (i <- 0 until 10) {
-  //    var true_positives = 0
-  //    var false_positives = 0
-  //    var false_negatives = 0
-
-  //    test_set = "" //docs(i) TODO
-  //    training_set = "" //docs - doc(i)
-
-  //    /* Process into appropriate matrices & compute model. */
-  //    val test_mat = Array(1, 2, 3) // TODO
-  //    val training_mat = Array(1, 2, 3)
-  //    val model = train(training_mat)
-
-  //    /* Classify & sort */
-  //    for (i <- 0 until test_set_size) {
-  //      result = classify(model, priors, test_mat(i))
-  //      if (result == label && label == 1)
-  //        true_positives += 1
-  //      else if (result != label && label == 1)
-  //        false_positives += 1
-  //      else if (result != label && label == -1)
-  //        false_negatives += 1
-  //    }
-
-  //    cur_precision = true_positives / (true_positives + false_positives)
-  //    cur_recall = true_positives / (true_positives + false_negatives)
-
-  //    f_measure_sum += f_measure(cur_precision, cur_recall, 1)
-  //  }
-
-  //  val f_measure_average = f_measure_sum / folds
-  //  return f_measure_average
-  //}
-
-  def main(args: Array[String]) = {
-    //create_dict()
-    val mat = process(true)
-=======
   def validate(docs: Array[BIDMat.SMat], folds: Int): Double = {
     val pos_docs: BIDMat.SMat = docs(0)
     val neg_docs: BIDMat.SMat = docs(1)
@@ -433,7 +380,7 @@ object NaiveBayes {
   }
 
   def main(args: Array[String]) = {
-    create_dict()
+    //create_dict()
     val mat = process(true)
     train(mat)
 
