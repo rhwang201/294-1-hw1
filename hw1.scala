@@ -21,7 +21,7 @@ import BIDMat.MatFunctions._
 import BIDMat.SciFunctions._
 import BIDMat.Solvers._
 import BIDMat.Plotting._
-import stemmer.Stemmer
+//import stemmer.Stemmer
 
 object NaiveBayes {
 
@@ -33,18 +33,25 @@ object NaiveBayes {
   val term_index_dir = "/Users/richard/classes/294-1/hw1/"
   val david_term_index_dir = "/Users/Davidius/294-1-hw1/"
   val term_index_filename = "term_index.txt"
-  val pos_files = "ls %spos".format(example_dir).!!.split("\n")
-  val neg_files = "ls %sneg".format(example_dir).!!.split("\n")
+  val pos_files = "ls %spos".format(david_example_dir).!!.split("\n")
+  val neg_files = "ls %sneg".format(david_example_dir).!!.split("\n")
 
-  val stop_words = List("the","is","which","at","on","a","but","we","have",
-                        "had","about","for","it","who","to","with","as")
+  val stop_words = List("the","a","an","be","am","are","is","was","were","have","has","had","about","at","before","between","during","from","in","into","of","since","to","until","with")
+  //Stop-word enumeration by category: article, pronouns, auxiliary verb, preposition, conjunction
+  /*List(
+  "the","a","an",  
+  "I","me","my","myself","you","your","yourself","he","him","his","himself","she","her","hers","herself","it","its","itself","who","what","how","which","when","why","whom",  
+  "be","am","are","is","was","were","have","has","had",  
+  "about","at","before","between","during","from","in","into","of","since","to","until","with",
+  "and","as","for","or","so")
+  */
 
   val word_mat_dir = "/Users/Davidius/BIDMat/"
   val word_mat_name = "words.mat"
 
   var term_index = mutable.Map.empty[String, Int]
 
-  var stemmer = new Stemmer() // TODO
+  //var stemmer = new Stemmer() // TODO
 
   val num_documents = 2000
   val alpha: Double = 1.0
@@ -62,7 +69,7 @@ object NaiveBayes {
     var i = 0
 
     pos_files.par.foreach( (file: String) => {
-      val s = Source.fromFile(example_dir + "pos/" + file)
+      val s = Source.fromFile(david_example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
@@ -84,7 +91,7 @@ object NaiveBayes {
     println("Finished indexing positive examples")
 
     neg_files.par.foreach( (file: String) => {
-      val s = Source.fromFile(example_dir + "neg/" + file)
+      val s = Source.fromFile(david_example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
@@ -121,9 +128,9 @@ object NaiveBayes {
   def create_dict_for(): mutable.Map[String,Int]  = {
     var z = 0
 
-    var files = "ls %spos".format(example_dir).!!.split("\n")
+    var files = "ls %spos".format(david_example_dir).!!.split("\n")
     for (i <- 0 until files.length) {
-      val s = Source.fromFile(example_dir + "pos/" + files(i))
+      val s = Source.fromFile(david_example_dir + "pos/" + files(i))
       s.getLines.foreach( (line: String) => {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
@@ -145,21 +152,21 @@ object NaiveBayes {
     }
     println("Finished indexing positive examples")
 
-    files = "ls %sneg".format(example_dir).!!.split("\n")
+    files = "ls %sneg".format(david_example_dir).!!.split("\n")
     for (i <- 0 until files.length) {
-      val s = Source.fromFile(example_dir + "neg/" + files(i))
+      val s = Source.fromFile(david_example_dir + "neg/" + files(i))
       s.getLines.foreach( (line: String) => {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
           var word = words(k)
-          stemmer.add(word)
-          stemmer.step1()
-          stemmer.step2()
-          stemmer.step3()
-          stemmer.step4()
-          stemmer.step5a()
-          stemmer.step5b()
-          word = stemmer.b
+          //stemmer.add(word)
+          //stemmer.step1()
+          //stemmer.step2()
+          //stemmer.step3()
+          //stemmer.step4()
+          //stemmer.step5a()
+          //stemmer.step5b()
+          //word = stemmer.b
           if (!term_index.keySet.exists(_ == word)) {
             term_index(word) = z
             z += 1
@@ -186,7 +193,7 @@ object NaiveBayes {
     val doc_mats = new Array[BIDMat.SMat](2)
     term_index = mutable.Map.empty[String, Int]
     if (read_index) {
-      val s = Source.fromFile(term_index_dir + term_index_filename)
+      val s = Source.fromFile(david_term_index_dir + term_index_filename)
       s.getLines.foreach( (line: String) => {
         line.split(",") match {
           case Array(str, num) => { term_index(str) = num.toInt }
@@ -205,7 +212,7 @@ object NaiveBayes {
     var words_neg_docs: FMat = zeros(num_words, num_documents / 2)
 
     for (i <- 0 until pos_files.length) {
-      val s = Source.fromFile(example_dir + "pos/" + pos_files(i))
+      val s = Source.fromFile(david_example_dir + "pos/" + pos_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
           //stemmer.add(word)
@@ -223,7 +230,7 @@ object NaiveBayes {
     }
     println("Finished processing positive files.")
     for (i <- 0 until neg_files.length) {
-      val s = Source.fromFile(example_dir + "neg/" + neg_files(i))
+      val s = Source.fromFile(david_example_dir + "neg/" + neg_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
           //stemmer.add(word)
