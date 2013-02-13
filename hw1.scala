@@ -204,14 +204,13 @@ object NaiveBayes {
   /* Given a file_path, returns a binary vector of words present. */
   def file_to_vect(file_path: String): BIDMat.SMat = {
     var words_vect: FMat = zeros(term_index.size, 1)
-
     val s = Source.fromFile(file_path)
     var t_i = -1
     s.getLines.foreach( (line) => {
       line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
         t_i = term_index(word)
-        if (words_vect(t_i, 1) == 0) {
-          words_vect(t_i, 1) += 1
+        if (words_vect(t_i, 0) == 0) {
+          words_vect(t_i, 0) += 1
         }
       })
     })
@@ -242,7 +241,7 @@ object NaiveBayes {
       neg_prob(i) = math.log( neg_freq(i) / neg_word_count ) //compute & populate i_th row/feature in negative log-probability matrix
     }
     val model = Array(pos_prob, neg_prob)  //combine positive & negative log-probability matrix into one Probability MATrix
-    println("Model completed!")
+    println("Model completed!  train() successful!")
     return model
   }
 
@@ -261,7 +260,7 @@ object NaiveBayes {
     //println(pos_map)
     //println(neg_map)
     /* Output a sentiment level. */
-    var sentiment = 100  //a distinctly non-appropriate value
+    var sentiment = 0  //a distinctly non-appropriate value
     if (pos_map >= neg_map) {
       sentiment = 1
     } else {
@@ -277,7 +276,7 @@ object NaiveBayes {
   }
 
   /* Performs 10-fold cross-validation, and applies an accuracy measure. */
-  def validate(docs: Array[BIDMat.SMat], folds: Int): Double = {
+  def validate(docs: Array[BIDMat.SMat], folds: Int, model: Array[BIDMat.DMat]): Double = {
     val pos_docs: BIDMat.SMat = docs(0)
     val neg_docs: BIDMat.SMat = docs(1)
     val num_docs: Int = pos_docs.nc
@@ -290,14 +289,15 @@ object NaiveBayes {
     var f_measure_sum = 0.0
     /* Loop 10 times; segregate training set from test set. */
     for (i <- 0 until folds) {
+      println("Commencing fold number %d".format(i))
       var true_positives = 0
       var false_positives = 0
       var false_negatives = 0
       /* Process into appropriate matrices & compute model. */
-      val pos_test_set: BIDMat.SMat = pos_docs(i*folds to (i+1)*folds-1, 0 to num_features-1)
-      val pos_training_set: BIDMat.SMat = pos_docs(0 to i*folds-1, 0 to num_features-1) \ pos_docs((i+1)*folds-1 to num_docs-1, 0 to num_features-1) 
-      val neg_test_set: BIDMat.SMat = neg_docs(i*folds to (i+1)*folds-1, 0 to num_features-1)
-      val neg_training_set: BIDMat.SMat = neg_docs(0 to i*folds-1, 0 to num_features-1) \ neg_docs((i+1)*folds-1 to num_docs-1, 0 to num_features-1) 
+      val pos_test_set: BIDMat.SMat = pos_docs(0 to num_features-1, i*test_set_size to (i+1)*test_set_size-1)
+      val pos_training_set: BIDMat.SMat = pos_docs(0 to num_features-1, 0 to i*test_set_size-1) \ pos_docs(0 to num_features-1, (i+1)*test_set_size to num_docs-1) 
+      val neg_test_set: BIDMat.SMat = neg_docs(0 to num_features-1, i*test_set_size to (i+1)*test_set_size-1)
+      val neg_training_set: BIDMat.SMat = neg_docs(0 to num_features-1, 0 to i*test_set_size-1) \ neg_docs(0 to num_features-1, (i+1)*test_set_size to num_docs-1) 
       val training_set: Array[BIDMat.SMat] = Array(pos_training_set, neg_training_set)
       val model: Array[BIDMat.DMat] = train(training_set)
       /* Classify & sort */
@@ -306,16 +306,17 @@ object NaiveBayes {
         neg_result = classify(model, priors, neg_test_set(?, i))
         if (pos_result == 1)
           true_positives += 1
+        else if (neg_result == -1)
+          true_positives += 1
         else if (pos_result == -1)
-          false_positives += 1
-        else if (neg_result == 1)
           false_negatives += 1
+        else if (neg_result == 1)
+          false_positives += 1
       }
-
       cur_precision = true_positives / (true_positives + false_positives)
       cur_recall = true_positives / (true_positives + false_negatives)
-
       f_measure_sum += f_measure(cur_precision, cur_recall, 1)
+      println("cur_precision = %f; cur_recall = %f".format(cur_precision, cur_recall))
     }
 
     val f_measure_average = f_measure_sum / folds
@@ -323,10 +324,15 @@ object NaiveBayes {
   }
 
   def main(args: Array[String]) = {
-    create_dict()
+    //create_dict()
     val mat = process(true)
-    train(mat)
-
+    val model = train(mat)
+    //val pos_result = classify( model, priors, file_to_vect("/Users/Davidius/294-1-hw1/review_polarity/txt_sentoken/pos/cv000_29590.txt") )
+    //println("Positive result? %d".format(pos_result))
+    //val neg_result = classify( model, priors, file_to_vect("/Users/Davidius/294-1-hw1/review_polarity/txt_sentoken/neg/cv000_29416.txt") )
+    //println("Negative result? %d".format(neg_result) )
+    val outcome = validate(mat, n_folds, model)
+    println("f_measure = %d".format(outcome))
     //println(mat(0)(term_index("marilyn"),0))
     //println(mat(0)(term_index("campbell"),0))
   }
