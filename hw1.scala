@@ -281,8 +281,8 @@ object NaiveBayes {
     /* Takes in |V| x |D| matrix doc_fmat of DOCument feature-Frequency MATrix*/
     val pos_docs_fmat: BIDMat.SMat = docs_fmat(0)  //positive documents
     val neg_docs_fmat: BIDMat.SMat = docs_fmat(1)  //negative documents
-    val num_features: Int = pos_docs_fmat.nr  //number of rows/features
-    val num_docs: Int = pos_docs_fmat.nc //number of columns/documents
+    val num_features: Int = pos_docs_fmat.nrows  //number of rows/features
+    val num_docs: Int = pos_docs_fmat.ncols //number of columns/documents
 
     /* Compile into two |V| x 1 matrices pos/neg_freq of aggregate feature-Frequency MATrix */
     val pos_freq: BIDMat.FMat = sum(pos_docs_fmat.t).t  //positive feature frequency matrix
@@ -309,7 +309,7 @@ object NaiveBayes {
     var pos_map: Double = math.log(priors(0))
     val neg_model: BIDMat.FMat = model(1)
     var neg_map: Double = math.log(priors(1))
-    val num_features = pos_model.nr
+    val num_features = pos_model.nrows
     val doc_freq_mat: BIDMat.FMat = full(doc)  //converts an SMat into an FMat
     pos_map += sum(doc_freq_mat *@ pos_model)(0)
     neg_map += sum(doc_freq_mat *@ neg_model)(0)
@@ -335,7 +335,7 @@ object NaiveBayes {
     val neg_docs: BIDMat.SMat = docs(1)
     val num_docs: Int = pos_docs.nc
     val test_set_size: Int = num_docs / folds
-    val num_features: Int = pos_docs.nr
+    val num_features: Int = pos_docs.nrows
     var pos_result: Int = 0
     var neg_result: Int = 0
     var cur_precision = 0.0
