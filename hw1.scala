@@ -51,7 +51,7 @@ object NaiveBayes {
 
   var term_index = mutable.Map.empty[String, Int]
 
-  //var stemmer = new Stemmer() // TODO
+  var stemmer = new Stemmer() // TODO
 
   val num_documents = 2000
   val alpha: Double = 1.0
