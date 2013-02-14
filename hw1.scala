@@ -21,20 +21,20 @@ import BIDMat.MatFunctions._
 import BIDMat.SciFunctions._
 import BIDMat.Solvers._
 import BIDMat.Plotting._
-//import stemmer.Stemmer
+import stemmer.Stemmer
 
 object NaiveBayes {
 
   val example_dir =
     "/Users/richard/classes/294-1/hw1/review_polarity/txt_sentoken/"
-  val david_example_dir =
-    "/Users/Davidius/294-1-hw1/review_polarity/txt_sentoken/"
+  //val example_dir =
+  //  "/Users/Davidius/294-1-hw1/review_polarity/txt_sentoken/"
 
   val term_index_dir = "/Users/richard/classes/294-1/hw1/"
-  val david_term_index_dir = "/Users/Davidius/294-1-hw1/"
+  //val term_index_dir = "/Users/Davidius/294-1-hw1/"
   val term_index_filename = "term_index.txt"
-  val pos_files = "ls %spos".format(david_example_dir).!!.split("\n")
-  val neg_files = "ls %sneg".format(david_example_dir).!!.split("\n")
+  val pos_files = "ls %spos".format(example_dir).!!.split("\n")
+  val neg_files = "ls %sneg".format(example_dir).!!.split("\n")
 
   val stop_words = List("the","a","an","be","am","are","is","was","were","have","has","had","about","at","before","between","during","from","in","into","of","since","to","until","with")
   //Stop-word enumeration by category: article, pronouns, auxiliary verb, preposition, conjunction
@@ -69,7 +69,7 @@ object NaiveBayes {
     var i = 0
 
     pos_files.par.foreach( (file: String) => {
-      val s = Source.fromFile(david_example_dir + "pos/" + file)
+      val s = Source.fromFile(example_dir + "pos/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
@@ -91,7 +91,7 @@ object NaiveBayes {
     println("Finished indexing positive examples")
 
     neg_files.par.foreach( (file: String) => {
-      val s = Source.fromFile(david_example_dir + "neg/" + file)
+      val s = Source.fromFile(example_dir + "neg/" + file)
       s.getLines.foreach( (line: String) => {
           line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
             if (!stop_words.contains(word) &&
@@ -128,9 +128,9 @@ object NaiveBayes {
   def create_dict_for(): mutable.Map[String,Int]  = {
     var z = 0
 
-    var files = "ls %spos".format(david_example_dir).!!.split("\n")
+    var files = "ls %spos".format(example_dir).!!.split("\n")
     for (i <- 0 until files.length) {
-      val s = Source.fromFile(david_example_dir + "pos/" + files(i))
+      val s = Source.fromFile(example_dir + "pos/" + files(i))
       s.getLines.foreach( (line: String) => {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
@@ -152,9 +152,9 @@ object NaiveBayes {
     }
     println("Finished indexing positive examples")
 
-    files = "ls %sneg".format(david_example_dir).!!.split("\n")
+    files = "ls %sneg".format(example_dir).!!.split("\n")
     for (i <- 0 until files.length) {
-      val s = Source.fromFile(david_example_dir + "neg/" + files(i))
+      val s = Source.fromFile(example_dir + "neg/" + files(i))
       s.getLines.foreach( (line: String) => {
         var words = line.split("[\\s.,();:!?&\"]+")
         for (k <- 0 until words.length) {
@@ -193,7 +193,7 @@ object NaiveBayes {
     val doc_mats = new Array[BIDMat.SMat](2)
     term_index = mutable.Map.empty[String, Int]
     if (read_index) {
-      val s = Source.fromFile(david_term_index_dir + term_index_filename)
+      val s = Source.fromFile(term_index_dir + term_index_filename)
       s.getLines.foreach( (line: String) => {
         line.split(",") match {
           case Array(str, num) => { term_index(str) = num.toInt }
@@ -207,12 +207,11 @@ object NaiveBayes {
     // Construct words_docs matrix
     val num_words = term_index.size
 
-    Mat.noMKL = true
     var words_pos_docs: FMat = zeros(num_words, num_documents / 2)
     var words_neg_docs: FMat = zeros(num_words, num_documents / 2)
 
     for (i <- 0 until pos_files.length) {
-      val s = Source.fromFile(david_example_dir + "pos/" + pos_files(i))
+      val s = Source.fromFile(example_dir + "pos/" + pos_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
           //stemmer.add(word)
@@ -228,9 +227,8 @@ object NaiveBayes {
         })
       })
     }
-    println("Finished processing positive files.")
     for (i <- 0 until neg_files.length) {
-      val s = Source.fromFile(david_example_dir + "neg/" + neg_files(i))
+      val s = Source.fromFile(example_dir + "neg/" + neg_files(i))
       s.getLines.foreach( (line) => {
         line.split("[\\s.,();:!?&\"]+").foreach({ (word: String) =>
           //stemmer.add(word)
@@ -390,16 +388,24 @@ object NaiveBayes {
 
   def main(args: Array[String]) = {
     //create_dict()
+    Mat.noMKL = true
+    flip
+
+    val t0 = System.nanoTime()
     val mat = process(true)
+    val t1 = System.nanoTime()
+    println("\n------\nProcessing time: %f milliseconds\n".format((t1 - t0) / 1e6))
     val model = train(mat)
-    //val pos_result = classify( model, priors, file_to_vect("/Users/Davidius/294-1-hw1/review_polarity/txt_sentoken/pos/cv000_29590.txt") )
-    //println("Positive result? %d".format(pos_result))
-    //val neg_result = classify( model, priors, file_to_vect("/Users/Davidius/294-1-hw1/review_polarity/txt_sentoken/neg/cv000_29416.txt") )
-    //println("Negative result? %d".format(neg_result) )
+    val t2 = System.nanoTime()
+    println("\n------\nTraining time: %f milliseconds\n".format((t2 - t1) / 1e6))
     val outcome = validate(mat, n_folds, model)
+    val t3 = System.nanoTime()
+    println("\n------\nValidation time: %f milliseconds\n".format((t3 - t2) / 1e6))
     println("f_measure = %f".format(outcome))
-    //println(mat(0)(term_index("marilyn"),0))
-    //println(mat(0)(term_index("campbell"),0))
+
+    val ff=gflop
+    println("GFlops: %f".format(ff._1))
+    println("Time: %f".format(ff._2))
   }
 
 }
