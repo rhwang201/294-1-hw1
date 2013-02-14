@@ -32,5 +32,6 @@ Finally, $validate()$ performs n-fold (in this case n = 10) cross validation on 
 Since for zero-count terms in our dictionary, taking the logarithm of $0$ would result in floating-point arithmetic error, we decided to apply additive smoothing with $\alpha = 1$.
 
 \section{Performance}
-For some reason, indexing the words was intolerably slow.  We tried using foreach, for loops, String.split() and StringTokenizer, and for loops and split turned out to be the fastest combination.  It still took at least 10 minutes to index all the words, though.  Constructing the word-document matrix, however, was very fast: about 7 seconds.
+For some reason, indexing the words was intolerably slow.  We tried using foreach, for loops, String.split() and StringTokenizer, and for loops and split turned out to be the fastest combination.  It still took at least 10 minutes to index all the words, though.  Constructing the word-document matrix, however, was very fast: about 7 seconds.  Building the model, that is, computing all the log probabilities took 3.4 seconds.  Finally, validation took 13.6 seconds.  Placing a flip and flop around our entire main method, we recorded 0.021549 GFlops on a Macbook Pro with Intel Core Duo.
+
 \end{document}
